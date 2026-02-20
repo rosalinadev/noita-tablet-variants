@@ -3,21 +3,8 @@ import nxml from "@noita-ts/nxml";
 import { MOD_ID } from "$mod";
 import { rotateHueRGB } from "./hueRotate";
 
-function doReplaceTextures(tablet: string) {
-  // TODO keep original hitbox no matter what
-  for (const content of nxml.edit_file("data/entities/items/books/base_book.xml")) {
-    const pathPrefix = `mods/${MOD_ID}/tablets/${tablet}`;
-    const replacements = {
-      PhysicsImageShapeComponent: {
-        image_file: `${pathPrefix}/in_world.png`,
-      },
-      ItemComponent: {
-        ui_sprite: `${pathPrefix}/in_ui.png`,
-      },
-      SpriteComponent: {
-        image_file: `${pathPrefix}/in_hand.png`,
-      },
-    };
+function replaceXMLValues(filename: string, replacements: Record<string, Record<string, string>>) {
+  for (const content of nxml.edit_file(filename)) {
     for (const [compName, attrs] of Object.entries(replacements)) {
       const comp = content.first_of(compName);
       if (!comp) continue;
@@ -67,13 +54,62 @@ function doRecolorTablet(hue: number) {
   }
 }
 
+function replaceTextures(variant: string): Record<string, Record<string, string>> {
+  // TODO keep original hitbox no matter what
+  if (variant === "default") return {};
+  const pathPrefix = `mods/${MOD_ID}/tablets/${variant}`;
+  const replacements: Record<string, Record<string, string>> = {
+    PhysicsImageShapeComponent: {
+      image_file: `${pathPrefix}/in_world.png`,
+    },
+    ItemComponent: {
+      ui_sprite: `${pathPrefix}/in_ui.png`,
+    },
+    SpriteComponent: {
+      image_file: `${pathPrefix}/in_hand.png`,
+    },
+  };
+  for (const comp of Object.values(replacements)) {
+    for (const [attrName, path] of Object.entries(comp)) {
+      if (!ModDoesFileExist(path)) {
+        delete comp[attrName];
+      }
+    }
+  }
+  return replacements;
+}
+
+function replaceParticles(material: string): Record<string, Record<string, string>> {
+  if (material === "default") return {};
+  const pathPrefix = `mods/${MOD_ID}/materials`;
+  if (ModDoesFileExist(`${pathPrefix}/${material}.png`)) {
+    for (const content of nxml.edit_file(`${pathPrefix}/material.xml`)) {
+      const cellDataComp = content.first_of("CellDataChild") as unknown as nxml.XMLElement;
+      (cellDataComp.first_of("Graphics") as unknown as nxml.XMLElement).set(
+        "texture_file",
+        `${pathPrefix}/${material}.png`,
+      );
+      material = `${MOD_ID}_${material}`;
+      cellDataComp.set("name", material);
+    }
+    ModMaterialsFileAdd(`${pathPrefix}/material.xml`);
+  }
+  return {
+    ParticleEmitterComponent: {
+      emitted_material_name: material,
+    },
+  };
+}
+
 mod.on("ModInit", () => {
   if (mod.settings.tablet === "recolor") {
     doRecolorTablet(mod.settings.hue_shift);
-  } else {
-    doReplaceTextures(mod.settings.tablet);
   }
-  // TODO material replacement for emitted particles
+
+  replaceXMLValues("data/entities/items/books/base_book.xml", {
+    ...replaceTextures(mod.settings.tablet),
+    ...replaceParticles(mod.settings.particles),
+  });
 });
 
 mod.on("PlayerSpawned", () => {

@@ -6,9 +6,11 @@ export default [
   {
     id: "tablet",
     ui_name: "Tablet",
-    ui_description: "Which tablet variant to use.\nVariant 'Recolor' is configured using the 'Hue Shift' setting.",
-    value_default: "recolor",
+    ui_description:
+      "Which tablet variant to use.\nVariant 'Recolor' is configured using the 'Hue Shift' setting.",
+    value_default: "default",
     values: [
+      ["default", "Default"],
       ["recolor", "Recolored"],
       ["burger", "Burger"],
       ["pride", "Pride"],
@@ -25,5 +27,18 @@ export default [
     value_max: 360,
     value_display_formatting: " $0deg",
     scope: ModSettingScope.Restart,
+  },
+  {
+    id: "particles",
+    ui_name: "Particles",
+    ui_description: "Which alternate particles to use. (changes the emitted material)",
+    value_default: "default",
+    values: [
+      ["default", "Default"],
+      ["material_rainbow", GameTextGet("$mat_rainbow")],
+      ["trans", "Trans"],
+    ],
+    scope: ModSettingScope.Restart,
+    // hidden: false as boolean,
   },
 ] as const satisfies ModSetting[];
