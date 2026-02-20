@@ -9,13 +9,13 @@ function doReplaceTextures(tablet: string) {
     const pathPrefix = `mods/${MOD_ID}/tablets/${tablet}`;
     const replacements = {
       PhysicsImageShapeComponent: {
-        image_file: `${pathPrefix}/items_gfx/emerald_tablet.png`,
+        image_file: `${pathPrefix}/in_world.png`,
       },
       ItemComponent: {
-        ui_sprite: `${pathPrefix}/ui_gfx/items/emerald_tablet.png`,
+        ui_sprite: `${pathPrefix}/in_ui.png`,
       },
       SpriteComponent: {
-        image_file: `${pathPrefix}/items_gfx/in_hand/emerald_tablet_in_hand.png`,
+        image_file: `${pathPrefix}/in_hand.png`,
       },
     };
     for (const [compName, attrs] of Object.entries(replacements)) {
