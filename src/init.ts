@@ -1,18 +1,15 @@
 import mod from "@noita-ts/base";
 import nxml from "@noita-ts/nxml";
-import { MOD_ID } from "$mod";
+import { MOD_ID, DEV } from "$mod";
 import { rotateHueRGB } from "./hueRotate";
 
-function replaceXMLValues(filename: string, replacements: Record<string, Record<string, string>>) {
-  for (const content of nxml.edit_file(filename)) {
-    for (const [compName, attrs] of Object.entries(replacements)) {
-      const comp = content.first_of(compName);
-      if (!comp) continue;
+function replaceXMLValues(element: nxml.XMLElement, replacements: nxml.XmlHints) {
+  for (const [compName, attrs] of Object.entries(replacements)) {
+    const [comp] = element.first_of(compName);
+    if (!comp) continue;
 
-      for (const [attrName, value] of Object.entries(attrs)) {
-        // FIXME update xnml when this is fixed:
-        (comp as unknown as nxml.XMLElement).set(attrName, value);
-      }
+    for (const [attrName, value] of Object.entries(attrs)) {
+      comp.set(attrName, value);
     }
   }
 }
@@ -54,11 +51,11 @@ function doRecolorTablet(hue: number) {
   }
 }
 
-function replaceTextures(variant: string): Record<string, Record<string, string>> {
+function replaceTextures(bookBase: nxml.XMLElement, variant: string) {
   // TODO keep original hitbox no matter what
-  if (variant === "default") return {};
+  if (variant === "default") return;
   const pathPrefix = `mods/${MOD_ID}/tablets/${variant}`;
-  const replacements: Record<string, Record<string, string>> = {
+  const pathReplacements: nxml.XmlHints = {
     PhysicsImageShapeComponent: {
       image_file: `${pathPrefix}/in_world.png`,
     },
@@ -69,36 +66,34 @@ function replaceTextures(variant: string): Record<string, Record<string, string>
       image_file: `${pathPrefix}/in_hand.png`,
     },
   };
-  for (const comp of Object.values(replacements)) {
+  for (const comp of Object.values(pathReplacements)) {
     for (const [attrName, path] of Object.entries(comp)) {
-      if (!ModDoesFileExist(path)) {
+      if (!ModDoesFileExist(path as string)) {
         delete comp[attrName];
       }
     }
   }
-  return replacements;
+  replaceXMLValues(bookBase, pathReplacements);
 }
 
-function replaceParticles(material: string): Record<string, Record<string, string>> {
-  if (material === "default") return {};
+function replaceParticles(bookBase: nxml.XMLElement, material: string) {
+  if (material === "default") return;
   const pathPrefix = `mods/${MOD_ID}/materials`;
   if (ModDoesFileExist(`${pathPrefix}/${material}.png`)) {
     for (const content of nxml.edit_file(`${pathPrefix}/material.xml`)) {
-      const cellDataComp = content.first_of("CellDataChild") as unknown as nxml.XMLElement;
-      (cellDataComp.first_of("Graphics") as unknown as nxml.XMLElement).set(
-        "texture_file",
-        `${pathPrefix}/${material}.png`,
-      );
+      const [cellDataComp] = content.first_of("CellDataChild");
+      const [graphicsComp] = cellDataComp!.first_of("Graphics");
+      graphicsComp!.set("texture_file", `${pathPrefix}/${material}.png`);
       material = `${MOD_ID}_${material}`;
-      cellDataComp.set("name", material);
+      cellDataComp!.set("name", material);
     }
     ModMaterialsFileAdd(`${pathPrefix}/material.xml`);
   }
-  return {
+  replaceXMLValues(bookBase, {
     ParticleEmitterComponent: {
       emitted_material_name: material,
     },
-  };
+  });
 }
 
 mod.on("ModInit", () => {
@@ -106,12 +101,12 @@ mod.on("ModInit", () => {
     doRecolorTablet(mod.settings.hue_shift);
   }
 
-  replaceXMLValues("data/entities/items/books/base_book.xml", {
-    ...replaceTextures(mod.settings.tablet),
-    ...replaceParticles(mod.settings.particles),
-  });
+  for (const bookBase of nxml.edit_file("data/entities/items/books/base_book.xml")) {
+    replaceTextures(bookBase, mod.settings.tablet);
+    replaceParticles(bookBase, mod.settings.particles);
+  }
 });
 
 mod.on("PlayerSpawned", () => {
-  GamePrint(`Tablet variant: ${mod.settings.tablet}`);
+  if (DEV) GamePrint(`Tablet variant: ${mod.settings.tablet}`);
 });

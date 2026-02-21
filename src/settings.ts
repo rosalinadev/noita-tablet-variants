@@ -39,6 +39,5 @@ export default [
       ["trans", "Trans"],
     ],
     scope: ModSettingScope.Restart,
-    // hidden: false as boolean,
   },
 ] as const satisfies ModSetting[];

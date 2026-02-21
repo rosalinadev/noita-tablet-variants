@@ -8,6 +8,6 @@
   "license": "MIT",
   "dependencies": {
     "@noita-ts/base": "^0.6.1",
-    "@noita-ts/nxml": "^0.1.0"
+    "@noita-ts/nxml": "^0.1.1"
   }
 }
