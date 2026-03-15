@@ -7,7 +7,7 @@
   "private": true,
   "license": "MIT",
   "dependencies": {
-    "@noita-ts/base": "^0.6.1",
+    "@noita-ts/base": "next",
     "@noita-ts/nxml": "^0.1.1"
   }
 }
