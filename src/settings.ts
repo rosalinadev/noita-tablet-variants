@@ -3,8 +3,9 @@ import { MOD_ID } from "$mod";
 declare global {
   interface SettingsShape {
     tablet: "default" | "recolor" | "burger" | "pride" | "trans";
-    hue_shift: number;
+    tablet_hue: number;
     particles: "default" | "rainbow" | "trans";
+    particles_hue: number;
   }
 }
 
@@ -34,9 +35,9 @@ const tablets: Tablet[] = [
     name: "Recolored",
     settings: [
       {
-        id: "hue_shift",
-        ui_name: "Hue Shift",
-        ui_description: "Hue shift to apply to the tablet when recoloring.",
+        id: "tablet_hue",
+        ui_name: "Tablet Hue",
+        ui_description: "Hue to apply to the tablet when recoloring.",
         value_default: 170,
         value_min: 0,
         value_max: 360,
@@ -50,6 +51,19 @@ const tablets: Tablet[] = [
   { id: "trans", name: "Trans", credit: "kabby's Trans Pride Tablet mod" },
 ];
 
+const particlesId = "particles";
+const particlesHueSetting = {
+  id: "particles_hue",
+  ui_name: "Particles Hue",
+  ui_description: "Hue to apply to the particles when recoloring.",
+  value_default: 170,
+  value_min: 0,
+  value_max: 360,
+  value_display_formatting: " $0deg",
+  scope: ModSettingScope.Restart,
+  hidden: ModSettingGetNextValue(`${MOD_ID}.${particlesId}`) !== "recolor",
+};
+
 const settings = [
   {
     id: variantId,
@@ -58,8 +72,7 @@ const settings = [
     value_default: "default",
     values: tablets.map(({ id, name }) => [id, name]),
     scope: ModSettingScope.Restart,
-    onchange(opts) {
-      const { old_value, new_value } = opts;
+    onchange({ old_value, new_value }) {
       function setHidden(tablet: string, hidden: boolean) {
         const tabletInfo = tablets.find(t => t.id === tablet);
         if (!tabletInfo) return;
@@ -90,16 +103,21 @@ const settings = [
   }),
 
   {
-    id: "particles",
+    id: particlesId,
     ui_name: "Particles",
     ui_description: "Which alternate particles to use. (changes the emitted material)",
     value_default: "default",
     values: [
       ["default", "Default"],
-      ["rainbow", "Rainbow"],
+      ["recolor", "Recolored"],
+      ["pride", "Pride"],
       ["trans", "Trans"],
     ],
     scope: ModSettingScope.Restart,
+    onchange({ new_value }) {
+      particlesHueSetting.hidden = new_value !== "recolor";
+    },
   },
+  particlesHueSetting,
 ] as const satisfies ModSetting[];
 export default settings;

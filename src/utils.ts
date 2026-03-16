@@ -19,14 +19,26 @@ export function replaceXMLValues(element: nxml.XMLElement, replacements: nxml.Xm
   }
 }
 
-export type Color = { r: number; g: number; b: number; a: number };
-export type ColorFilter = (color: Color) => Color | undefined;
-export function filterTexture(filename: string, filter: ColorFilter) {
+export type ImageInfo = { id: number; width: number; height: number };
+export type ImageSource = string | ImageInfo | undefined;
+
+export function openTexture(filename: string): ImageInfo | undefined {
   const [id, width, height] = ModImageMakeEditable(filename, 0, 0);
   if (!id) {
     log_err(`ModImageMakeEditable() failed for ${filename}`);
     return;
   }
+  return { id, width, height };
+}
+
+export type Color = { r: number; g: number; b: number; a: number };
+export type ColorFilter = (color: Color) => Color | undefined;
+
+export function filterTexture(texture: ImageSource, filter: ColorFilter) {
+  if (typeof texture === "string") texture = openTexture(texture);
+  if (!texture) return;
+  const { id, width, height } = texture;
+
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const pxRaw = ModImageGetPixel(id, x, y);
@@ -40,4 +52,28 @@ export function filterTexture(filename: string, filter: ColorFilter) {
       ModImageSetPixel(id, x, y, (color.a << 24) | (color.b << 16) | (color.g << 8) | color.r);
     }
   }
+}
+
+export function copyTexture(from: ImageSource, to: ImageSource) {
+  if (typeof from === "string") from = openTexture(from);
+  if (typeof to === "string") to = openTexture(to);
+  if (!from || !to) return;
+  const { id: fromID, width, height } = from;
+  const { id: toID, width: toWidth, height: toHeight } = to;
+  if (width !== toWidth || height !== toHeight) {
+    log_err(`copyTexture mismatch: from: ${width}x${height}, to: ${toWidth}x${toHeight})`);
+    return;
+  }
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const px = ModImageGetPixel(fromID, x, y);
+      ModImageSetPixel(toID, x, y, px);
+    }
+  }
+}
+
+export function colorToNoitaHex({ r, g, b, a }: Color) {
+  const toHex = (n: number) => n.toString(16).padStart(2, "0");
+  return toHex(a) + toHex(r) + toHex(g) + toHex(b);
 }

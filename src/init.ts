@@ -1,72 +1,76 @@
 import mod from "@noita-ts/base";
 import nxml from "@noita-ts/nxml";
 import { MOD_ID, DEV } from "$mod";
-import { ColorFilter, filterTexture, replaceXMLValues } from "./utils";
+import { colorToNoitaHex, copyTexture, filterTexture, replaceXMLValues } from "./utils";
 import { rotateHueRGB } from "./hueRotate";
 
+const tabletTextures = Object.entries({
+  in_world: "data/items_gfx/emerald_tablet.png",
+  in_ui: "data/ui_gfx/items/emerald_tablet.png",
+  in_hand: "data/items_gfx/in_hand/emerald_tablet_in_hand.png",
+}).map(([replacementTexture, targetPath]) => ({
+  game: targetPath,
+  replacement: (variant: string) => `mods/${MOD_ID}/tablets/${variant}/${replacementTexture}.png`,
+}));
+
 function doRecolorTablet(hue: number) {
-  const paths = [
-    "data/items_gfx/emerald_tablet.png",
-    "data/ui_gfx/items/emerald_tablet.png",
-    "data/items_gfx/in_hand/emerald_tablet_in_hand.png",
-  ];
-  const hueFilter: ColorFilter = color => {
-    if (!color.a) return;
-    return {
-      ...color,
-      ...rotateHueRGB(color.r, color.g, color.b, hue),
-    };
-  };
-  for (const path of paths) {
-    filterTexture(path, hueFilter);
+  const vanillaTabletHue = 144;
+  for (const { game: path } of tabletTextures) {
+    filterTexture(path, color => {
+      const { r, g, b, a } = color;
+      if (!a) return;
+      return {
+        ...rotateHueRGB(r, g, b, hue - vanillaTabletHue),
+        a,
+      };
+    });
   }
 }
 
-function replaceTextures(bookBase: nxml.XMLElement, variant: string) {
-  // TODO keep original hitbox no matter what
+function replaceTextures(variant: string) {
   if (variant === "default") return;
-  const pathPrefix = `mods/${MOD_ID}/tablets/${variant}`;
-  const pathReplacements: nxml.XmlHints = {
-    PhysicsImageShapeComponent: {
-      image_file: `${pathPrefix}/in_world.png`,
-    },
-    ItemComponent: {
-      ui_sprite: `${pathPrefix}/in_ui.png`,
-    },
-    SpriteComponent: {
-      image_file: `${pathPrefix}/in_hand.png`,
-    },
-  };
-  for (const comp of Object.values(pathReplacements)) {
-    for (const [attrName, path] of Object.entries(comp)) {
-      if (!ModDoesFileExist(path as string)) {
-        delete comp[attrName];
-      }
-    }
+
+  for (const { game, replacement } of tabletTextures) {
+    const replacementPath = replacement(variant);
+    if (!ModDoesFileExist(replacementPath)) continue;
+    copyTexture(replacementPath, game);
   }
-  replaceXMLValues(bookBase, pathReplacements);
 }
 
-function replaceParticles(bookBase: nxml.XMLElement, material: string) {
-  if (material === "default") return;
+function replaceParticles(bookBase: nxml.XMLElement, variant: string) {
+  const material = `${MOD_ID}_spark_tablet`;
   const pathPrefix = `mods/${MOD_ID}/materials`;
-  const materialTexturePath = `${pathPrefix}/${material}.png`;
-  if (ModDoesFileExist(materialTexturePath)) {
-    for (const content of nxml.edit_file(`${pathPrefix}/material.xml`)) {
-      const [cellDataComp] = content.first_of("CellDataChild");
-      const [graphicsComp] = cellDataComp!.first_of("Graphics");
-      graphicsComp!.set("texture_file", materialTexturePath);
+  let materialTexturePath = `${pathPrefix}/${variant}.png`;
+
+  for (const content of nxml.edit_file(`${pathPrefix}/material.xml`)) {
+    const [cellDataComp] = content.first_of("CellDataChild");
+    if (!cellDataComp) return;
+    cellDataComp.set("name", material);
+
+    const [graphicsComp] = cellDataComp.first_of("Graphics");
+    if (!graphicsComp) return;
+    if (ModDoesFileExist(materialTexturePath)) {
       filterTexture(materialTexturePath, color => {
         return {
           ...color,
           a: 127,
         };
       });
-      material = `${MOD_ID}_${material}`;
-      cellDataComp!.set("name", material);
+    } else materialTexturePath = "";
+    graphicsComp.set("texture_file", materialTexturePath);
+
+    if (variant === "recolor") {
+      const [r, g, b] = [150, 255, 70];
+      const vanillaSparkHue = 94; // spark_green #96FF46
+
+      const sparkColor = rotateHueRGB(r, g, b, mod.settings.tablet_hue - vanillaSparkHue);
+      const sparkColorHex = colorToNoitaHex({ ...sparkColor, a: 127 });
+
+      graphicsComp.set("color", sparkColorHex);
     }
-    ModMaterialsFileAdd(`${pathPrefix}/material.xml`);
   }
+  ModMaterialsFileAdd(`${pathPrefix}/material.xml`);
+
   replaceXMLValues(bookBase, {
     ParticleEmitterComponent: {
       emitted_material_name: material,
@@ -76,11 +80,11 @@ function replaceParticles(bookBase: nxml.XMLElement, material: string) {
 
 mod.on("ModInit", () => {
   if (mod.settings.tablet === "recolor") {
-    doRecolorTablet(mod.settings.hue_shift);
+    doRecolorTablet(mod.settings.tablet_hue);
   }
 
+  replaceTextures(mod.settings.tablet);
   for (const bookBase of nxml.edit_file("data/entities/items/books/base_book.xml")) {
-    replaceTextures(bookBase, mod.settings.tablet);
     replaceParticles(bookBase, mod.settings.particles);
   }
 });

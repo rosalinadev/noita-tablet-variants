@@ -1,11 +1,12 @@
 <Materials>
   <CellDataChild
     _parent="spark"
+    tags=" "
     name="PLACEHOLDER"
     wang_color="FF9516DA">
     <Graphics
       texture_file="PLACEHOLDER"
-      color="FF9516DA">
+      color="7F96FF46">
     </Graphics>
   </CellDataChild>
 </Materials>
