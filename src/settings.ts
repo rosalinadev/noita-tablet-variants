@@ -2,7 +2,7 @@ import { MOD_ID } from "$mod";
 
 declare global {
   interface SettingsShape {
-    tablet: "default" | "recolor" | "burger" | "pride" | "trans";
+    tablet: "default" | "recolor" | "burger" | "rainbow" | "trans";
     tablet_hue: number;
     particles: "default" | "rainbow" | "trans";
     particles_hue: number;
@@ -47,7 +47,7 @@ const tablets: Tablet[] = [
     ],
   },
   { id: "burger", name: "Burger", credit: "LeDankSquid's Burger Tablets mod" },
-  { id: "pride", name: "Pride", credit: "Dudeguy Broman's Pride Tablet mod" },
+  { id: "rainbow", name: "Rainbow" },
   { id: "trans", name: "Trans", credit: "kabby's Trans Pride Tablet mod" },
 ];
 
@@ -110,7 +110,7 @@ const settings = [
     values: [
       ["default", "Default"],
       ["recolor", "Recolored"],
-      ["pride", "Pride"],
+      ["rainbow", "Rainbow"],
       ["trans", "Trans"],
     ],
     scope: ModSettingScope.Restart,
