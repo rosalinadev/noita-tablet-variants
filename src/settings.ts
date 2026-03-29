@@ -1,4 +1,11 @@
 import { MOD_ID } from "$mod";
+import {
+  HideableModSetting,
+  MyModSetting,
+  ModSettingHue,
+  mod_setting_hue,
+  HUE,
+} from "./settings_utils";
 
 declare global {
   interface SettingsShape {
@@ -9,22 +16,12 @@ declare global {
   }
 }
 
-interface HideableModSettingLabel extends ModSettingLabel {
-  hidden?: boolean;
-}
-type HideableModSetting =
-  | HideableModSettingLabel
-  | ModSettingCheckbox
-  | ModSettingSlider
-  | ModSettingEnum
-  | ModSettingText;
-
 interface Tablet {
   id: string;
   name: string;
   settings?: HideableModSetting[];
   credit?: string;
-  creditSetting?: HideableModSettingLabel;
+  creditSetting?: ModSettingLabel;
 }
 
 const variantId = "tablet";
@@ -36,13 +33,16 @@ const tablets: Tablet[] = [
     settings: [
       {
         id: "tablet_hue",
-        ui_name: "Tablet Hue",
+        ui_name: "",
         ui_description: "Hue to apply to the tablet when recoloring.",
-        value_default: 170,
-        value_min: 0,
-        value_max: 360,
+        value_default: 144,
+        value_min: HUE.MIN,
+        value_max: HUE.MAX,
         value_display_formatting: " $0deg",
         scope: ModSettingScope.Restart,
+        ui_fn: mod_setting_hue,
+        preview_s: 0.4,
+        preview_v: 0.8,
       },
     ],
   },
@@ -54,15 +54,17 @@ const tablets: Tablet[] = [
 const particlesId = "particles";
 const particlesHueSetting = {
   id: "particles_hue",
-  ui_name: "Particles Hue",
+  ui_name: "",
   ui_description: "Hue to apply to the particles when recoloring.",
-  value_default: 170,
-  value_min: 0,
-  value_max: 360,
+  value_default: 94,
+  value_min: HUE.MIN,
+  value_max: HUE.MAX,
   value_display_formatting: " $0deg",
   scope: ModSettingScope.Restart,
   hidden: ModSettingGetNextValue(`${MOD_ID}.${particlesId}`) !== "recolor",
-};
+  ui_fn: mod_setting_hue,
+  preview_s: 0.73,
+} satisfies ModSettingHue;
 
 const settings = [
   {
@@ -119,5 +121,5 @@ const settings = [
     },
   },
   particlesHueSetting,
-] as const satisfies ModSetting[];
+] as const satisfies MyModSetting[];
 export default settings;

@@ -1,5 +1,6 @@
 import nxml from "@noita-ts/nxml";
 import { MOD_ID } from "$mod";
+import { ColorFilter } from "./color_utils";
 
 export function log(...args: any[]) {
   print(`[${MOD_ID}]`, ...args);
@@ -30,9 +31,6 @@ export function openTexture(filename: string): ImageInfo | undefined {
   }
   return { id, width, height };
 }
-
-export type Color = { r: number; g: number; b: number; a: number };
-export type ColorFilter = (color: Color) => Color | undefined;
 
 export function filterTexture(texture: ImageSource, filter: ColorFilter) {
   if (typeof texture === "string") texture = openTexture(texture);
@@ -71,9 +69,4 @@ export function copyTexture(from: ImageSource, to: ImageSource) {
       ModImageSetPixel(toID, x, y, px);
     }
   }
-}
-
-export function colorToNoitaHex({ r, g, b, a }: Color) {
-  const toHex = (n: number) => n.toString(16).padStart(2, "0");
-  return toHex(a) + toHex(r) + toHex(g) + toHex(b);
 }

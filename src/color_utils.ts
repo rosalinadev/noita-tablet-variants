@@ -1,9 +1,21 @@
-// hella vibecoded
+export type Color = { r: number; g: number; b: number; a: number };
+export type ColorFilter = (color: Color) => Color | undefined;
+
+export function colorToNoitaHex({ r, g, b, a }: Color) {
+  const toHex = (n: number) => n.toString(16).padStart(2, "0");
+  return toHex(a) + toHex(r) + toHex(g) + toHex(b);
+}
 
 /**
  * Rotate the hue of an RGB color by `deg` degrees.
  */
-export function rotateHueRGB(r: number, g: number, b: number, deg: number): { r: number; g: number; b: number } {
+// hella vibecoded
+export function rotateHueRGB(
+  r: number,
+  g: number,
+  b: number,
+  deg: number,
+): { r: number; g: number; b: number } {
   // convert RGB to HSL
   r /= 255;
   g /= 255;
@@ -59,4 +71,21 @@ export function rotateHueRGB(r: number, g: number, b: number, deg: number): { r:
     b2 = hue2rgb(p, q, h - 1 / 3);
   }
   return { r: Math.round(r2 * 255), g: Math.round(g2 * 255), b: Math.round(b2 * 255) };
+}
+
+/**
+ * Convert HSV to RGB
+ * @param {number} h Hue in degrees
+ * @param {number} [s = 1] Saturation (0-1)
+ * @param {number} [v = 1] Value (0-1)
+ * @returns RGB values as an array [r, g, b] where each component is in the range 0-255
+ * @see {@link https://en.wikipedia.org/wiki/HSL_and_HSV#HSV_to_RGB_alternative|Algorithm on Wikipedia}
+ */
+export function convertHSVtoRGB(h: number, s: number = 1, v: number = 1): [number, number, number] {
+  h %= 360;
+  const f = (n: number): number => {
+    const k = (n + h / 60) % 6;
+    return v - v * s * Math.max(0, Math.min(k, 4 - k, 1));
+  };
+  return [f(5), f(3), f(1)];
 }

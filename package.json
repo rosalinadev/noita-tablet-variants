@@ -6,8 +6,12 @@
   "noita.compat": 12,
   "private": true,
   "license": "MIT",
+  "scripts": {
+    "start": "nts run",
+    "build": "nts build"
+  },
   "dependencies": {
-    "@noita-ts/base": "next",
+    "@noita-ts/base": "^0.7.0",
     "@noita-ts/nxml": "^0.1.1"
   }
 }

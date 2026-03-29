@@ -1,8 +1,8 @@
 import mod from "@noita-ts/base";
 import nxml from "@noita-ts/nxml";
 import { MOD_ID, DEV } from "$mod";
-import { colorToNoitaHex, copyTexture, filterTexture, replaceXMLValues } from "./utils";
-import { rotateHueRGB } from "./hueRotate";
+import { copyTexture, filterTexture, replaceXMLValues } from "./utils";
+import { colorToNoitaHex, rotateHueRGB } from "./color_utils";
 
 const tabletTextures = Object.entries({
   in_world: "data/items_gfx/emerald_tablet.png",
