@@ -1,6 +1,7 @@
 import * as settings from "data/scripts/lib/mod_settings.lua";
 import { GUI_OPTION } from "data/scripts/lib/utilities.lua";
 import { convertHSVtoRGB } from "./color_utils";
+import { MOD_ID } from "$mod";
 
 export type HideableModSetting =
   | ModSettingLabel
@@ -12,10 +13,26 @@ export type HideableModSetting =
 
 export type MyModSetting = ModSetting | ModSettingHue;
 
+// FIXME: in the future use @noita-ts provided types?
+export type ModSettingDrawFunction<S extends MyModSetting> = (
+  this: S,
+  opts: { gui: GuiID; in_main_menu: boolean; im_id: number },
+) => void;
+
+export type ModSettingOnChangeFunction<S extends MyModSetting> = (
+  this: S,
+  opts: {
+    gui: GuiID;
+    in_main_menu: boolean;
+    old_value: S extends ModSettingValue<infer V> ? V : never;
+    new_value: S extends ModSettingValue<infer V> ? V : never;
+  },
+) => void;
+
 export interface ModSettingHue extends ModSettingSlider {
   value_min: typeof HUE.MIN;
   value_max: typeof HUE.MAX;
-  ui_fn: typeof mod_setting_hue;
+  draw: typeof mod_setting_hue;
   /** Preview HSV saturation (0 to 1, default: 1) */
   preview_s?: number;
   /** Preview HSV value (0 to 1, default: 1) */
@@ -28,34 +45,32 @@ export const HUE = {
 } as const;
 
 // wrapper for mod_setting_number
-export function mod_setting_hue(
-  mod_id: string,
-  gui: GuiID,
-  in_main_menu: boolean,
-  im_id: number,
-  setting: ModSettingHue,
-) {
+export const mod_setting_hue: ModSettingDrawFunction<ModSettingHue> = function ({
+  gui,
+  in_main_menu,
+  im_id,
+}) {
   const sliderWidth = 64;
-  const [nameWidth] = GuiGetTextDimensions(gui, setting.ui_name);
+  const [nameWidth] = GuiGetTextDimensions(gui, this.ui_name);
 
   // gradient image behind slider
   const sliderOffset = settings.mod_setting_group_x_offset + nameWidth + 1;
-  const sliderImagePath = `mods/${mod_id}/assets/hue_slider.png`;
+  const sliderImagePath = `mods/${MOD_ID}/assets/hue_slider.png`;
   GuiZSetForNextWidget(gui, 1);
   GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine);
   GuiImage(gui, im_id, sliderOffset, -1, sliderImagePath, 1, 1, 10);
 
   // get preview color
   let [h, s, v] = [
-    ModSettingGetNextValue(`${mod_id}.${setting.id}`),
-    setting.preview_s ?? 1,
-    setting.preview_v ?? 1,
+    ModSettingGetNextValue(`${MOD_ID}.${this.id}`),
+    this.preview_s ?? 1,
+    this.preview_v ?? 1,
   ];
-  if (typeof h != "number") h = setting.value_default ?? 0;
+  if (typeof h != "number") h = this.value_default ?? 0;
   const [r, g, b] = convertHSVtoRGB(h, s, v);
 
   // color preview next to slider
-  const whiteImagePath = `mods/${mod_id}/assets/1px_white.png`;
+  const whiteImagePath = `mods/${MOD_ID}/assets/1px_white.png`;
   GuiColorSetForNextWidget(gui, r, g, b, 1);
   GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine);
   GuiImage(gui, im_id, sliderOffset + sliderWidth + 3, -1, whiteImagePath, 1, 10, 10);
@@ -69,8 +84,8 @@ export function mod_setting_hue(
     spacePaddingWidth = w;
   }
 
-  settings.mod_setting_number(mod_id, gui, in_main_menu, im_id, {
-    ...setting,
-    value_display_formatting: spacePadding + (setting.value_display_formatting ?? ""),
+  settings.mod_setting_number(MOD_ID, gui, in_main_menu, im_id, {
+    ...this,
+    value_display_formatting: spacePadding + (this.value_display_formatting ?? ""),
   });
-}
+};

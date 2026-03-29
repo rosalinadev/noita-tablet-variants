@@ -40,7 +40,7 @@ const tablets: Tablet[] = [
         value_max: HUE.MAX,
         value_display_formatting: " $0deg",
         scope: ModSettingScope.Restart,
-        ui_fn: mod_setting_hue,
+        draw: mod_setting_hue,
         preview_s: 0.4,
         preview_v: 0.8,
       },
@@ -62,7 +62,7 @@ const particlesHueSetting = {
   value_display_formatting: " $0deg",
   scope: ModSettingScope.Restart,
   hidden: ModSettingGetNextValue(`${MOD_ID}.${particlesId}`) !== "recolor",
-  ui_fn: mod_setting_hue,
+  draw: mod_setting_hue,
   preview_s: 0.73,
 } satisfies ModSettingHue;
 
