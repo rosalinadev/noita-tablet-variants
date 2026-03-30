@@ -9,7 +9,7 @@ import {
 
 declare global {
   interface SettingsShape {
-    tablet: "default" | "recolor" | "burger" | "rainbow" | "trans";
+    tablet: "default" | "recolor" | "rainbow" | "trans";
     tablet_hue: number;
     particles: "default" | "rainbow" | "trans";
     particles_hue: number;
@@ -46,7 +46,6 @@ const tablets: Tablet[] = [
       },
     ],
   },
-  { id: "burger", name: "Burger", credit: "LeDankSquid's Burger Tablets mod" },
   { id: "rainbow", name: "Rainbow" },
   { id: "trans", name: "Trans", credit: "kabby's Trans Pride Tablet mod" },
 ];
