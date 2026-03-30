@@ -37,7 +37,7 @@ function replaceTextures(variant: string) {
   }
 }
 
-function replaceParticles(bookBase: nxml.XMLElement, variant: string) {
+function replaceParticles(bookBase: nxml.XMLElement, variant: typeof mod.settings.particles) {
   const material = `${MOD_ID}_spark_tablet`;
   const pathPrefix = `mods/${MOD_ID}/materials`;
   let materialTexturePath = `${pathPrefix}/${variant}.png`;
@@ -63,7 +63,7 @@ function replaceParticles(bookBase: nxml.XMLElement, variant: string) {
       const [r, g, b] = [150, 255, 70];
       const vanillaSparkHue = 94; // spark_green #96FF46
 
-      const sparkColor = rotateHueRGB(r, g, b, mod.settings.tablet_hue - vanillaSparkHue);
+      const sparkColor = rotateHueRGB(r, g, b, mod.settings.particles_hue - vanillaSparkHue);
       const sparkColorHex = colorToNoitaHex({ ...sparkColor, a: 127 });
 
       graphicsComp.set("color", sparkColorHex);

@@ -11,7 +11,7 @@ declare global {
   interface SettingsShape {
     tablet: "default" | "recolor" | "rainbow" | "trans";
     tablet_hue: number;
-    particles: "default" | "rainbow" | "trans";
+    particles: "default" | "recolor" | "rainbow" | "trans";
     particles_hue: number;
   }
 }
