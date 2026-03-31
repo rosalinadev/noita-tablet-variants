@@ -3,36 +3,32 @@ import { GUI_OPTION } from "data/scripts/lib/utilities.lua";
 import { convertHSVtoRGB } from "./color_utils";
 import { MOD_ID } from "$mod";
 
-export type HideableModSetting =
-  | ModSettingLabel
-  | ModSettingCheckbox
-  | ModSettingSlider
-  | ModSettingHue
-  | ModSettingEnum
-  | ModSettingText;
+export interface Tablet {
+  id: string;
+  name: string;
+  settings?: HideableModSetting[];
+  altText?: string;
+  altTextLabel?: ModSettingLabel;
+  credit?: string;
+}
+
+export function defineTablets<const T extends readonly Tablet[]>(tablets: T): Tablet[] & T {
+  return tablets as Tablet[] & T;
+}
+
+export function defineValues<const T extends readonly (readonly [string, string])[]>(
+  values: T,
+): [string, string][] & T {
+  return values as [string, string][] & T;
+}
 
 export type MyModSetting = ModSetting | ModSettingHue;
 
-// FIXME: in the future use @noita-ts provided types?
-export type ModSettingDrawFunction<S extends MyModSetting> = (
-  this: S,
-  opts: { gui: GuiID; in_main_menu: boolean; im_id: number },
-) => void;
-
-export type ModSettingOnChangeFunction<S extends MyModSetting> = (
-  this: S,
-  opts: {
-    gui: GuiID;
-    in_main_menu: boolean;
-    old_value: S extends ModSettingValue<infer V> ? V : never;
-    new_value: S extends ModSettingValue<infer V> ? V : never;
-  },
-) => void;
+export type HideableModSetting = Exclude<MyModSetting, ModSettingCategory>;
 
 export interface ModSettingHue extends ModSettingSlider {
   value_min: typeof HUE.MIN;
   value_max: typeof HUE.MAX;
-  draw: typeof mod_setting_hue;
   /** Preview HSV saturation (0 to 1, default: 1) */
   preview_s?: number;
   /** Preview HSV value (0 to 1, default: 1) */
@@ -44,12 +40,10 @@ export const HUE = {
   MAX: 360,
 } as const;
 
+export const makeSettingHue = (setting: ModSettingHue): ModSettingHue => ({
+  ...setting,
 // wrapper for mod_setting_number
-export const mod_setting_hue: ModSettingDrawFunction<ModSettingHue> = function ({
-  gui,
-  in_main_menu,
-  im_id,
-}) {
+  draw: function ({ gui, in_main_menu, im_id }) {
   const sliderWidth = 64;
   const [nameWidth] = GuiGetTextDimensions(gui, this.ui_name);
 
@@ -88,4 +82,5 @@ export const mod_setting_hue: ModSettingDrawFunction<ModSettingHue> = function (
     ...this,
     value_display_formatting: spacePadding + (this.value_display_formatting ?? ""),
   });
-};
+  },
+});

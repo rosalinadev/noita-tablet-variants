@@ -1,37 +1,32 @@
 import { MOD_ID } from "$mod";
 import {
-  HideableModSetting,
+  defineTablets,
+  defineValues,
   MyModSetting,
-  ModSettingHue,
-  mod_setting_hue,
+  makeSettingHue,
   HUE,
+  Tablet,
 } from "./settings_utils";
+
+const VARIANT_ID = "tablet";
+const PARTICLES_ID = "particles";
 
 declare global {
   interface SettingsShape {
-    tablet: "default" | "recolor" | "rainbow" | "trans";
+    tablet: (typeof unfilteredTablets)[number]["id"];
     tablet_hue: number;
-    particles: "default" | "recolor" | "rainbow" | "trans";
+    particles: (typeof particles)[number][0];
     particles_hue: number;
   }
 }
 
-interface Tablet {
-  id: string;
-  name: string;
-  settings?: HideableModSetting[];
-  credit?: string;
-  creditSetting?: ModSettingLabel;
-}
-
-const variantId = "tablet";
-const tablets: Tablet[] = [
+const unfilteredTablets = defineTablets([
   { id: "default", name: "Default" },
   {
     id: "recolor",
     name: "Recolored",
     settings: [
-      {
+      makeSettingHue({
         id: "tablet_hue",
         ui_name: "",
         ui_description: "Hue to apply to the tablet when recoloring.",
@@ -40,18 +35,28 @@ const tablets: Tablet[] = [
         value_max: HUE.MAX,
         value_display_formatting: " $0deg",
         scope: ModSettingScope.Restart,
-        draw: mod_setting_hue,
         preview_s: 0.4,
         preview_v: 0.8,
-      },
+      }),
     ],
   },
   { id: "rainbow", name: "Rainbow" },
   { id: "trans", name: "Trans", credit: "kabby's Trans Pride Tablet mod" },
-];
+] as const satisfies readonly Tablet[]);
 
-const particlesId = "particles";
-const particlesHueSetting = {
+const particles = defineValues([
+  ["default", "Default"],
+  ["recolor", "Recolored"],
+  ["rainbow", "Rainbow"],
+  ["trans", "Trans"],
+] as const satisfies readonly (readonly [string, string])[]);
+
+const tablets = unfilteredTablets.filter(variant => {
+  if (variant.credit) variant.altText = `Credit: ${variant.credit}`;
+  return true;
+});
+
+const particlesHueSetting = makeSettingHue({
   id: "particles_hue",
   ui_name: "",
   ui_description: "Hue to apply to the particles when recoloring.",
@@ -60,60 +65,55 @@ const particlesHueSetting = {
   value_max: HUE.MAX,
   value_display_formatting: " $0deg",
   scope: ModSettingScope.Restart,
-  hidden: ModSettingGetNextValue(`${MOD_ID}.${particlesId}`) !== "recolor",
-  draw: mod_setting_hue,
+  hidden: ModSettingGetNextValue(`${MOD_ID}.${PARTICLES_ID}`) !== "recolor",
   preview_s: 0.73,
-} satisfies ModSettingHue;
+});
 
 const settings = [
   {
-    id: variantId,
+    id: VARIANT_ID,
     ui_name: "Tablet",
     ui_description: "Which tablet variant to use.",
     value_default: "default",
     values: tablets.map(({ id, name }) => [id, name]),
     scope: ModSettingScope.Restart,
     onchange({ old_value, new_value }) {
-      function setHidden(tablet: string, hidden: boolean) {
-        const tabletInfo = tablets.find(t => t.id === tablet);
-        if (!tabletInfo) return;
-        if (tabletInfo.creditSetting) tabletInfo.creditSetting.hidden = hidden;
-        tabletInfo.settings?.forEach(setting => (setting.hidden = hidden));
-      }
-      setHidden(old_value, true);
-      setHidden(new_value, false);
+      const oldTablet = tablets.find(t => t.id === old_value);
+      const newTablet = tablets.find(t => t.id === new_value);
+
+      const setHidden = (tablet: Tablet | undefined, hidden: boolean) => {
+        if (tablet?.altTextLabel) tablet.altTextLabel.hidden = hidden;
+        tablet?.settings?.forEach(setting => (setting.hidden = hidden));
+      };
+      setHidden(oldTablet, true);
+      setHidden(newTablet, false);
     },
   },
 
   ...tablets.flatMap(({ id, settings }) => {
     if (!settings) return [];
     return settings.map(setting => {
-      setting.hidden = ModSettingGetNextValue(`${MOD_ID}.${variantId}`) !== id;
+      setting.hidden = ModSettingGetNextValue(`${MOD_ID}.${VARIANT_ID}`) !== id;
       return setting;
     });
   }),
 
   ...tablets.flatMap(tablet => {
-    const { credit, id } = tablet;
-    if (!credit) return [];
-    return (tablet.creditSetting = {
+    const { altText, id } = tablet;
+    if (!altText) return [];
+    return (tablet.altTextLabel = {
       not_setting: true,
-      ui_name: `Tablet credit: ${credit}`,
-      hidden: ModSettingGetNextValue(`${MOD_ID}.${variantId}`) !== id,
+      ui_name: altText,
+      hidden: ModSettingGetNextValue(`${MOD_ID}.${VARIANT_ID}`) !== id,
     });
   }),
 
   {
-    id: particlesId,
+    id: PARTICLES_ID,
     ui_name: "Particles",
     ui_description: "Which alternate particles to use. (changes the emitted material)",
     value_default: "default",
-    values: [
-      ["default", "Default"],
-      ["recolor", "Recolored"],
-      ["rainbow", "Rainbow"],
-      ["trans", "Trans"],
-    ],
+    values: particles,
     scope: ModSettingScope.Restart,
     onchange({ new_value }) {
       particlesHueSetting.hidden = new_value !== "recolor";
