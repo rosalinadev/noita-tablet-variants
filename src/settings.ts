@@ -42,6 +42,7 @@ const unfilteredTablets = defineTablets([
   },
   { id: "rainbow", name: "Rainbow" },
   { id: "trans", name: "Trans", credit: "kabby's Trans Pride Tablet mod" },
+  { id: "lesbian", name: "Lesbian" },
 ] as const satisfies readonly Tablet[]);
 
 const particles = defineValues([
@@ -49,6 +50,7 @@ const particles = defineValues([
   ["recolor", "Recolored"],
   ["rainbow", "Rainbow"],
   ["trans", "Trans"],
+  ["lesbian", "Lesbian"],
 ] as const satisfies readonly (readonly [string, string])[]);
 
 const tablets = unfilteredTablets.filter(variant => {
